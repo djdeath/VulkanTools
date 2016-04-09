@@ -104,26 +104,41 @@ option(BUILD_VKTRACE "Build VkTrace" ON)
 option(BUILD_VKJSON "Build vkjson" ON)
 
 if (BUILD_ICD OR BUILD_TESTS OR BUILD_DEMOS)
-    find_program(GLSLANG_VALIDATOR NAMES glslangValidator
-                 HINTS "${CMAKE_SOURCE_DIR}/../glslang/${BUILDTGT_DIR}/install/bin"
-                       "${PROJECT_SOURCE_DIR}/../${BINDATA_DIR}" )
+    if (CMAKE_GENERATOR MATCHES "^Visual Studio.*")
+
+        find_program(GLSLANG_VALIDATOR NAMES glslangValidator
+                     HINTS "${CMAKE_SOURCE_DIR}/../glslang/${BUILDTGT_DIR}/install/bin"
+                     "${PROJECT_SOURCE_DIR}/../${BINDATA_DIR}" )
+    else()
+        find_program(GLSLANG_VALIDATOR NAMES glslangValidator
+                     HINTS "${CMAKE_SOURCE_DIR}/../glslang/install/bin"
+                     "${PROJECT_SOURCE_DIR}/../${BINDATA_DIR}" )
+    endif()
 
     find_path(GLSLANG_SPIRV_INCLUDE_DIR SPIRV/spirv.hpp HINTS "${CMAKE_SOURCE_DIR}/../glslang" DOC "Path to SPIRV/spirv.hpp")
     find_path(SPIRV_TOOLS_INCLUDE_DIR spirv-tools/libspirv.h HINTS "${CMAKE_SOURCE_DIR}/../spirv-tools/include"
                                                                    "${CMAKE_SOURCE_DIR}/../source/spirv-tools/include"
                                                                    "${CMAKE_SOURCE_DIR}/../spirv-tools/external/include"
                                                                    "${CMAKE_SOURCE_DIR}/../source/spirv-tools/external/include"
-                                                             DOC "Path to spirv-tools/libspirv.h")
+                                                                   DOC "Path to spirv-tools/libspirv.h")
 
-    if (WIN32)
-        set (GLSLANG_SEARCH_PATH "${CMAKE_SOURCE_DIR}/../glslang/${BUILDTGT_DIR}/glslang/Release"
-                                 "${CMAKE_SOURCE_DIR}/../glslang/${BUILDTGT_DIR}/glslang/OSDependent/Windows/Release"
-                                 "${CMAKE_SOURCE_DIR}/../glslang/${BUILDTGT_DIR}/OGLCompilersDLL/Release"
-                                 "${CMAKE_SOURCE_DIR}/../glslang/${BUILDTGT_DIR}/SPIRV/Release" )
-        set (SPIRV_TOOLS_SEARCH_PATH "${CMAKE_SOURCE_DIR}/../spirv-tools/${BUILDTGT_DIR}/source/Release")
+    if(WIN32)
+       if (CMAKE_GENERATOR MATCHES "^Visual Studio.*")
+           set (GLSLANG_SEARCH_PATH "${CMAKE_SOURCE_DIR}/../glslang/${BUILDTGT_DIR}/glslang/Release"
+               "${CMAKE_SOURCE_DIR}/../glslang/${BUILDTGT_DIR}/glslang/OSDependent/Windows/Release"
+               "${CMAKE_SOURCE_DIR}/../glslang/${BUILDTGT_DIR}/OGLCompilersDLL/Release"
+               "${CMAKE_SOURCE_DIR}/../glslang/${BUILDTGT_DIR}/SPIRV/Release" )
+           set (SPIRV_TOOLS_SEARCH_PATH "${CMAKE_SOURCE_DIR}/../spirv-tools/${BUILDTGT_DIR}/source/Release")
+       else()
+           set (GLSLANG_SEARCH_PATH "${CMAKE_SOURCE_DIR}/../glslang/glslang"
+               "${CMAKE_SOURCE_DIR}/../glslang/glslang/OSDependent/Windows"
+               "${CMAKE_SOURCE_DIR}/../glslang/OGLCompilersDLL"
+               "${CMAKE_SOURCE_DIR}/../glslang/SPIRV" )
+           set (SPIRV_TOOLS_SEARCH_PATH "${CMAKE_SOURCE_DIR}/../spirv-tools/source")
+       endif()
     else()
-        set (GLSLANG_SEARCH_PATH "${CMAKE_SOURCE_DIR}/../glslang/build/install/lib" "${CMAKE_SOURCE_DIR}/../x86_64/lib/glslang" )
-        set (SPIRV_TOOLS_SEARCH_PATH "${CMAKE_SOURCE_DIR}/../spirv-tools/build/source" "${CMAKE_SOURCE_DIR}/../x86_64/lib/spirv-tools" )
+       set (GLSLANG_SEARCH_PATH "${CMAKE_SOURCE_DIR}/../glslang/build/install/lib" "${CMAKE_SOURCE_DIR}/../x86_64/lib/glslang" )
+       set (SPIRV_TOOLS_SEARCH_PATH "${CMAKE_SOURCE_DIR}/../spirv-tools/build/source" "${CMAKE_SOURCE_DIR}/../x86_64/lib/spirv-tools" )
     endif()
 
     find_library(GLSLANG_LIB NAMES glslang
@@ -143,11 +158,19 @@ if (BUILD_ICD OR BUILD_TESTS OR BUILD_DEMOS)
 
     # On Windows, we must pair Debug and Release appropriately
     if (WIN32)
-        set (GLSLANG_DEBUG_SEARCH_PATH "${CMAKE_SOURCE_DIR}/../glslang/${BUILDTGT_DIR}/glslang/Debug"
-                                       "${CMAKE_SOURCE_DIR}/../glslang/${BUILDTGT_DIR}/glslang/OSDependent/Windows/Debug"
-                                       "${CMAKE_SOURCE_DIR}/../glslang/${BUILDTGT_DIR}/OGLCompilersDLL/Debug"
-                                       "${CMAKE_SOURCE_DIR}/../glslang/${BUILDTGT_DIR}/SPIRV/Debug")
-        set (SPIRV_TOOLS_DEBUG_SEARCH_PATH "${CMAKE_SOURCE_DIR}/../spirv-tools/${BUILDTGT_DIR}/source/Debug")
+        if (CMAKE_GENERATOR MATCHES "^Visual Studio.*")
+            set (GLSLANG_DEBUG_SEARCH_PATH "${CMAKE_SOURCE_DIR}/../glslang/${BUILDTGT_DIR}/glslang/Debug"
+                                           "${CMAKE_SOURCE_DIR}/../glslang/${BUILDTGT_DIR}/glslang/OSDependent/Windows/Debug"
+                                           "${CMAKE_SOURCE_DIR}/../glslang/${BUILDTGT_DIR}/OGLCompilersDLL/Debug"
+                                           "${CMAKE_SOURCE_DIR}/../glslang/${BUILDTGT_DIR}/SPIRV/Debug")
+            set (SPIRV_TOOLS_DEBUG_SEARCH_PATH "${CMAKE_SOURCE_DIR}/../spirv-tools/${BUILDTGT_DIR}/source/Debug")
+        else()
+            set (GLSLANG_DEBUG_SEARCH_PATH "${CMAKE_SOURCE_DIR}/../glslang/glslang"
+                "${CMAKE_SOURCE_DIR}/../glslang/glslang/OSDependent/Windows"
+                "${CMAKE_SOURCE_DIR}/../glslang/OGLCompilersDLL"
+                "${CMAKE_SOURCE_DIR}/../glslang/SPIRV")
+            set (SPIRV_TOOLS_DEBUG_SEARCH_PATH "${CMAKE_SOURCE_DIR}/../spirv-tools/source")
+        endif()
 
         add_library(glslang     STATIC IMPORTED)
         add_library(OGLCompiler STATIC IMPORTED)
